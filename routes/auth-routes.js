@@ -41,6 +41,8 @@ router.post('/addassessments', (req, res, next) => {
     let newAssessment = new Assessmentm({
 
         title: req.body.title,
+        score:req.body.score,
+        domain:req.body.domain
 
     });
     newAssessment.save(function (err, assessment) {
@@ -77,7 +79,9 @@ router.get('/getassessment/:subject', function (req, res) {
 router.put('/updateassessment/:subject', function (req, res) {
 
 
-    Assessmentm.findOneAndUpdate({ title: req.params.subject },
+    Assessmentm.findOneAndUpdate({
+        title: req.params.subject,
+    },
         {
             $set: {
 
@@ -96,20 +100,57 @@ router.put('/updateassessment/:subject', function (req, res) {
 
         });
 });
+router.put('/updateassessmentscore/:subject', function (req, res) {
+
+
+    Assessmentm.findOneAndUpdate({
+        title: req.params.subject,
+    },
+        {
+            $set: {
+
+                 score: req.body.score
+            }
+        },
+        { new: true },
+        function (err, assessment) {
+            if (err)
+                res.send(err);
+            else {
+                console.log(assessment),
+                    res.json(assessment);
+            }
+
+
+        });
+});
+
 
 
 
 router.put('/addsubassessment/:subject', function (req, res) {
+//  var query = { 
+//         'title': req.params.subject,
+//        // 'domain.title':req.params.sub
+//      };
+//     var doc = {
+//         $set: {
+//             'domain': req.body
+//         }
+//     };
 
-
-    var query = { title: req.params.subject };
+     var query = { title: req.params.subject };
     var doc = {
-        $push: {
-            'domain': {
-                title: req.body.name
-            }
-        }
-    };
+       $push: {
+        'domain': {
+             title: req.body.name,
+    description:req.body.description,
+                dom_score:req.body.dom_score,
+                sub_domain:req.body.sub_domain
+
+           }
+     }
+     };
     var options = { upsert: true };
     Assessmentm.findOneAndUpdate(query, doc, options, function (err, assessment) {
         if (err)
@@ -119,163 +160,221 @@ router.put('/addsubassessment/:subject', function (req, res) {
     });
 })
 router.put('/addsubsubassessment/:subject/:sub', function (req, res) {
-const assess= req.params.subject;
- const domain = req.params.sub;
- const subdomain = req.body.name;
- const docs=any;
- const dom=any;
- Assessmentm.findOne(assess, (err, userm) => {
-        if (err) {
-            console.log("error");
+    var query = { 
+        'title': req.params.subject,
+        'domain.title':req.params.sub
+     };
+    var doc = {
+        $set: {
+            'domain.$.sub_domain': req.body
         }
-        if (userm) {
-       this.docs=userm;}
-});
-   this.dom=this.doc.domain;
-    
-var map = function(){
-    for(var i = 0; i < this.dom.length; i++){
-        emit( 
-            {
-                "_id": this._id, 
-                "index": i 
-            }, 
-            {
-                "index": i, 
-                "dom": this.dom[i],            
-                "update": {
-                    "title": "dom." + i.toString() + ".sub_domain.$.title",
-                    // "description": "operations." + i.toString() + ".parameters.$.description",
-                    // "type": "operations." + i.toString() + ".parameters.$.type"
-                }                    
-            }
-        );
-    }
-};
+    };
+    var options = { upsert: true };
+    Assessmentm.findOneAndUpdate(query, doc, options, function (err, assessment) {
+        if (err)
+            res.json(err);
+        else
+            res.json(assessment);
+    });
+    // const assess = req.params.subject;
+    // const domain = req.params.sub;
+    // const subdomain = req.body.name;
+    // const docs = any;
+    // const dom = any;
+    // Assessmentm.findOne(assess, (err, userm) => {
+    //     if (err) {
+    //         console.log("error");
+    //     }
+    //     if (userm) {
+    //         this.docs = userm;
+    //     }
+    // });
+    // this.dom = this.doc.domain;
 
-var reduce = function(){};
+    // var map = function () {
+    //     for (var i = 0; i < this.dom.length; i++) {
+    //         emit(
+    //             {
+    //                 "_id": this._id,
+    //                 "index": i
+    //             },
+    //             {
+    //                 "index": i,
+    //                 "dom": this.dom[i],
+    //                 "update": {
+    //                     "title": "dom." + i.toString() + ".sub_domain.$.title",
+    //                     // "description": "operations." + i.toString() + ".parameters.$.description",
+    //                     // "type": "operations." + i.toString() + ".parameters.$.type"
+    //                 }
+    //             }
+    //         );
+    //     }
+    // };
 
-db.collection.mapReduce(
-    map,
-    reduce,
-    {
-        "out": {
-            "replace": "operations"
-        }
-    }
-);
-//var oid = req.params.operations;
-//var pid = req.params.parameters;
-var cur = db.operations.find({"_id._id": domain, "value.operations.sub_domain.title":subdomain });
+    // var reduce = function () { };
 
-// Iterate through results and update using the update query object set dynamically by using the array-index syntax.
-while (cur.hasNext()) {
-    var doc = cur.next();
-    var update = { "$set": {} };
-    // set the update query object
-    update["$set"][doc.value.update.title] = subdomain;
-    // update["$set"][doc.value.update.description] = req.body.description;
-    // update["$set"][doc.value.update.type] = req.body.type;
+    // db.collection.mapReduce(
+    //     map,
+    //     reduce,
+    //     {
+    //         "out": {
+    //             "replace": "operations"
+    //         }
+    //     }
+    // );
+    // //var oid = req.params.operations;
+    // //var pid = req.params.parameters;
+    // var cur = db.operations.find({ "_id._id": domain, "value.operations.sub_domain.title": subdomain });
 
-    db.collection.update(
-        {
-            "_id" : oid, 
-            "operations.sub_domain.title":subdomain
-        }, 
-        update 
-    );
-};
-    
+    // // Iterate through results and update using the update query object set dynamically by using the array-index syntax.
+    // while (cur.hasNext()) {
+    //     var doc = cur.next();
+    //     var update = { "$set": {} };
+    //     // set the update query object
+    //     update["$set"][doc.value.update.title] = subdomain;
+    //     // update["$set"][doc.value.update.description] = req.body.description;
+    //     // update["$set"][doc.value.update.type] = req.body.type;
+
+    //     db.collection.update(
+    //         {
+    //             "_id": oid,
+    //             "operations.sub_domain.title": subdomain
+    //         },
+    //         update
+    //     );
+    // };
+
 })
 router.put('/updatesubassessment/:subject/:domain', function (req, res) {
 
 
-   // var query = { title: req.params.subject }
-   // var querym=query.Assessmentm.where({'domain.title': req.params.domain})
-  /*  var doc = {
-        $update: {
-            'domain': {
-                title: req.body.name
-            }
+    // var query = { title: req.params.subject }
+    // var querym=query.Assessmentm.where({'domain.title': req.params.domain})
+    /*  var doc = {
+          $update: {
+              'domain': {
+                  title: req.body.name
+              }
+          }
+      };*/
+    var options = { upsert: true };
+    Assessmentm.findOneAndUpdate({ "domain.title": req.params.domain }, {
+        "$set": {
+            "domain.$.title": req.body.name
         }
-    };*/
-  var options = { upsert: true };
-Assessmentm.findOneAndUpdate( {"domain.title":req.params.domain} ,{"$set": {
-"domain.$.title": req.body.name }},options,function (err, assessment) {
-      if (err)
+    }, options, function (err, assessment) {
+        if (err)
             res.json(err);
         else
             res.json(assessment);
-      
-});
+
+    });
+})
+router.put('/updatesubassessmentscore/:subject/:domain', function (req, res) {
+
+
+    // var query = { title: req.params.subject }
+    // var querym=query.Assessmentm.where({'domain.title': req.params.domain})
+    /*  var doc = {
+          $update: {
+              'domain': {
+                  title: req.body.name
+              }
+          }
+      };*/
+    var options = { upsert: true };
+    Assessmentm.findOneAndUpdate({ "domain.title": req.params.domain }, {
+        "$set": {
+            "domain.$.dom_score": req.body.dom_score
+        }
+    }, options, function (err, assessment) {
+        if (err)
+            res.json(err);
+        else
+            res.json(assessment);
+
+    });
 })
 router.put('/updatesubsubassessment/:subject/:domain', function (req, res) {
 
 
-   // var query = { title: req.params.subject }
-   // var querym=query.Assessmentm.where({'domain.title': req.params.domain})
-  /*  var doc = {
-        $update: {
-            'domain': {
-                title: req.body.name
-            }
+    // var query = { title: req.params.subject }
+    // var querym=query.Assessmentm.where({'domain.title': req.params.domain})
+    /*  var doc = {
+          $update: {
+              'domain': {
+                  title: req.body.name
+              }
+          }
+      };*/
+    var options = { upsert: true };
+    Assessmentm.findOneAndUpdate({ "domain.title": req.params.domain }, {
+        "$set": {
+            "domain.$.title": req.body.name
         }
-    };*/
-  var options = { upsert: true };
-Assessmentm.findOneAndUpdate( {"domain.title":req.params.domain} ,{"$set": {
-"domain.$.title": req.body.name }},options,function (err, assessment) {
-      if (err)
+    }, options, function (err, assessment) {
+        if (err)
             res.json(err);
         else
             res.json(assessment);
-      
-});
+
+    });
 })
 router.put('/deletesubassessment/:domain', function (req, res) {
 
 
-   // var query = { title: req.params.subject }
-   // var querym=query.Assessmentm.where({'domain.title': req.params.domain})
-  /*  var doc = {
-        $update: {
-            'domain': {
-                title: req.body.name
-            }
-        }
-    };*/
-  var options = { safe: true, multi:true};
-Assessmentm.findOneAndUpdate( {"domain.title":req.params.domain} ,{"$pull": 
-{ "domain": { "title": req.params.domain }}},options,function (err, assessment) {
-      if (err)
+    // var query = { title: req.params.subject }
+    // var querym=query.Assessmentm.where({'domain.title': req.params.domain})
+    /*  var doc = {
+          $update: {
+              'domain': {
+                  title: req.body.name
+              }
+          }
+      };*/
+    var options = { safe: true, multi: true };
+    Assessmentm.findOneAndUpdate({ "domain.title": req.params.domain }, {
+        "$pull":
+        { "domain": { "title": req.params.domain } }
+    }, options, function (err, assessment) {
+        if (err)
             res.json(err);
         else
-        console.log(assessment);
-            res.json(assessment);
-      
-});
+            console.log(assessment);
+        res.json(assessment);
+
+    });
 })
-router.put('/deletesubassessment/:domain', function (req, res) {
+router.put('/deletesubsubassessment/:subject/:domain/:subdomain', function (req, res) {
 
 
-   // var query = { title: req.params.subject }
-   // var querym=query.Assessmentm.where({'domain.title': req.params.domain})
-  /*  var doc = {
-        $update: {
-            'domain': {
-                title: req.body.name
-            }
-        }
-    };*/
-  var options = { safe: true, multi:true};
-Assessmentm.findOneAndUpdate( {"domain.title":req.params.domain} ,{"$pull": 
-{ "domain": { "title": req.params.domain }}},options,function (err, assessment) {
-      if (err)
+    // var query = { title: req.params.subject }
+    // var querym=query.Assessmentm.where({'domain.title': req.params.domain})
+    /*  var doc = {
+          $update: {
+              'domain': {
+                  title: req.body.name
+              }
+          }
+      };*/
+  var query = { 
+        'title': req.params.subject,
+        'domain.title':req.params.domain,
+        'sub_domain.$.title':req.params.subdomain
+     };
+    var doc = {
+       $pull: {
+            'sub_domain.$.title': req.params.subdomain
+     }
+    };
+    var options = { upsert: true };
+    Assessmentm.findOneAndUpdate(query, doc, options, function (err, assessment) {
+        if (err)
             res.json(err);
         else
-        console.log(assessment);
             res.json(assessment);
-      
-});
+    });
+    
 })
 
 /*router.post('/authorize', (req, res, next) => {//acccessing from client side for definite span thru token

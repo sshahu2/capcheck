@@ -1,5 +1,6 @@
 module.exports={
-    database:'mongodb://localhost:27017/capstone',
+  //  database:'mongodb://capstone-app:capstone-app@ds119044.mlab.com:19044/capstone-app',
+     database:'mongodb://localhost:27017/capstone',
     secret:"any"
 
 }

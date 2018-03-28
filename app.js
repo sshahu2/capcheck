@@ -8,15 +8,15 @@ const passport=require('passport');
 const bodyParser=require('body-parser');
 const path=require('path');//it is in-built
 const cors=require('cors');
-const port=3000;
+const port=process.env.PORT||3000;
 const conn=require('./models/user-direct');
 const app= express();
 const session=require('express-session');
 app.use(cors());//to access from any domain...
 app.use(bodyParser.json());//uses middleware
 app.use(bodyParser.urlencoded({extended:true}));
-app.use(express.static('public'));
-app.use(express.static(path.join(__dirname,'angular-src')));
+//app.use(express.static('public'));
+app.use(express.static(path.join(__dirname,'public')));
 //const functions=require('./config/function');
 
 const keys=require('./config/keys');
